@@ -1,0 +1,30 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Expiry Lens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-body">
+
+    <div class="auth-card glass-card">
+        <h1 class="auth-title">🌿 Expiry Lens</h1>
+        <p class="auth-subtitle">Log in to manage your food inventory</p>
+
+        {% if error_message %}
+            <p class="auth-error">{{ error_message }}</p>
+        {% endif %}
+
+        <form method="POST" action="/login" class="auth-form">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="upload-button">Log In</button>
+        </form>
+
+        <p class="auth-switch">Don't have an account? <a href="/register">Register here</a></p>
+    </div>
+
+</body>
+</html>

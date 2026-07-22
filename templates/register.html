@@ -1,0 +1,30 @@
+<!-- templates/register.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Expiry Lens</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-body">
+
+    <div class="auth-card glass-card">
+        <h1 class="auth-title">🌿 Expiry Lens</h1>
+        <p class="auth-subtitle">Create an account to get started</p>
+
+        {% if error_message %}
+            <p class="auth-error">{{ error_message }}</p>
+        {% endif %}
+
+        <form method="POST" action="/register" class="auth-form">
+            <input type="text" name="username" placeholder="Choose a username" required>
+            <input type="password" name="password" placeholder="Choose a password" required>
+            <button type="submit" class="upload-button">Register</button>
+        </form>
+
+        <p class="auth-switch">Already have an account? <a href="/login">Log in here</a></p>
+    </div>
+
+</body>
+</html>

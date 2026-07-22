@@ -1,0 +1,6 @@
+﻿venv/
+__pycache__/
+*.pyc
+database/expiry_lens.db
+static/uploads/*
+!static/uploads/.gitkeep

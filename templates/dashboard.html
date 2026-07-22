@@ -1,0 +1,120 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Dashboard</h2>
+    <p>Welcome to Expiry Lens! Here are all your scanned food items.</p>
+
+    <div class="stats-grid">
+        <div class="glass-card stat-card">
+            <p class="stat-number">{{ stats.total_items }}</p>
+            <p class="stat-label">Total Items Scanned</p>
+        </div>
+        <div class="glass-card stat-card">
+            <p class="stat-number stat-good">{{ stats.saved_count }}</p>
+            <p class="stat-label">Items Saved</p>
+        </div>
+        <div class="glass-card stat-card">
+            <p class="stat-number stat-bad">{{ stats.wasted_count }}</p>
+            <p class="stat-label">Items Wasted</p>
+        </div>
+        <div class="glass-card stat-card">
+            <p class="stat-number stat-good">₹{{ stats.money_saved }}</p>
+            <p class="stat-label">Money Saved</p>
+        </div>
+        <div class="glass-card stat-card">
+            <p class="stat-number stat-good">{{ stats.co2_saved_kg }} kg</p>
+            <p class="stat-label">CO₂ Emissions Saved</p>
+        </div>
+    </div>
+
+    {% if food_items %}
+        <div class="charts-grid">
+            <div class="glass-card chart-card">
+                <h3>Saved vs Wasted</h3>
+                <canvas id="saved-wasted-chart"
+                        data-saved="{{ stats.saved_count }}"
+                        data-wasted="{{ stats.wasted_count }}"></canvas>
+            </div>
+            <div class="glass-card chart-card">
+                <h3>Items by Status</h3>
+                <canvas id="status-breakdown-chart"
+                        data-fresh="{{ stats.fresh_count }}"
+                        data-warning="{{ stats.warning_count }}"
+                        data-urgent="{{ stats.urgent_count }}"
+                        data-expired="{{ stats.expired_count }}"></canvas>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="glass-card upload-card">
+        <h3>Upload a Food Image</h3>
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+            <input type="file" name="food_image" accept="image/*" required>
+            <button type="submit" class="upload-button">Upload & Scan</button>
+        </form>
+    </div>
+
+    <div class="glass-card camera-card">
+        <h3>Scan With Camera</h3>
+        <p id="camera-status">Click below to open your camera and scan a food item instantly.</p>
+
+        <video id="camera-video" autoplay playsinline style="display: none;"></video>
+        <canvas id="camera-canvas" style="display: none;"></canvas>
+
+        <div class="camera-buttons">
+            <button id="start-camera-btn" type="button" class="upload-button">Start Camera</button>
+            <button id="capture-btn" type="button" class="upload-button capture-button" style="display: none;">Capture & Scan</button>
+        </div>
+    </div>
+
+    {% if food_items %}
+        <div class="glass-card search-filter-card">
+            <input type="text" id="search-input" placeholder="Search by food name..." class="search-box">
+
+            <div class="filter-buttons">
+                <button class="filter-btn filter-active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="status-fresh">Fresh</button>
+                <button class="filter-btn" data-filter="status-warning">Expiring Soon</button>
+                <button class="filter-btn" data-filter="status-urgent">Urgent</button>
+                <button class="filter-btn" data-filter="status-expired">Expired</button>
+            </div>
+        </div>
+
+        <div class="items-grid">
+            {% for item in food_items %}
+                <div class="glass-card food-card" data-food-name="{{ item.food_name }}" data-status="{{ item.css_class }}">
+                    <span class="status-badge {{ item.css_class }}">{{ item.status_label }}</span>
+                    <h3>{{ item.food_name }}</h3>
+                    <p><strong>Expiry Date:</strong> {{ item.expiry_date }}</p>
+                    <p><strong>Scanned On:</strong> {{ item.scan_date }}</p>
+                    <p><strong>Storage:</strong> {{ item.storage_type }}</p>
+
+                    <p class="freshness-label"><strong>Freshness Score:</strong> {{ item.freshness_score }}/100</p>
+                    <div class="freshness-bar-track">
+                        <div class="freshness-bar-fill" style="width: {{ item.freshness_score }}%;"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card">
+            <p>No items scanned yet. Upload a food image to get started.</p>
+        </div>
+    {% endif %}
+
+    {% if recipe_suggestions %}
+        <h2 class="section-title">Recipe Suggestions</h2>
+        <p>Use up your expiring ingredients with these ideas:</p>
+
+        <div class="items-grid">
+            {% for recipe in recipe_suggestions %}
+                <div class="glass-card recipe-card">
+                    <h3>🍽️ {{ recipe.name }}</h3>
+                    <p>{{ recipe.instructions }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+{% endblock %}
