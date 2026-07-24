@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 
-    <!-- PWA setup -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#2e7d32">
     <link rel="icon" href="{{ url_for('static', filename='icon-192.png') }}">
@@ -42,16 +41,33 @@
         <p>&copy; 2026 Expiry Lens - InnoChamp Innovation Competition</p>
     </footer>
 
+    {% if username %}
+    <button id="chat-toggle-btn" class="chat-toggle-btn" type="button">💬 Ask Assistant</button>
+
+    <div id="chat-panel" class="chat-panel">
+        <div class="chat-panel-header">
+            <span>🌿 Expiry Lens Assistant</span>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <div class="chat-message chat-bot">Hi! Ask me anything about food storage, shelf life, or recipe ideas.</div>
+        </div>
+        <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Ask a question..." autocomplete="off" required>
+            <button type="submit" class="upload-button">Send</button>
+        </form>
+    </div>
+    {% endif %}
+
     <script src="{{ url_for('static', filename='js/camera.js') }}"></script>
     <script src="{{ url_for('static', filename='js/search_filter.js') }}"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dark_mode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 
     <script>
-        // Register our service worker so the browser recognizes this as an installable PWA
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("{{ url_for('static', filename='js/service_worker.js') }}");
         }
     </script>
 </body>
-</html> 
+</html>

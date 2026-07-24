@@ -4,7 +4,7 @@
 import os
 from datetime import datetime
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 
 from utils.database import initialize_database, get_all_food_items, add_food_item
 from utils.food_detector import detect_food_item
@@ -15,13 +15,9 @@ from utils.recipe_recommender import get_recipe_suggestions
 from utils.freshness_score import calculate_freshness_score
 from utils.statistics import calculate_statistics
 from utils.auth import initialize_users_table, create_user, verify_user
+from utils.chatbot import ask_assistant
 
 app = Flask(__name__)
-
-# secret_key is REQUIRED for Flask sessions to work securely - it's used 
-# to cryptographically sign the session cookie so it can't be tampered with
-# In a real production app, this should be a long random string kept secret,
-# loaded from an environment variable rather than hardcoded
 app.secret_key = "expiry-lens-secret-key-change-this-in-production"
 
 UPLOAD_FOLDER = os.path.join("static", "uploads")
@@ -32,11 +28,6 @@ initialize_users_table()
 
 
 def login_required(view_function):
-    """
-    This is a DECORATOR - a function that wraps another function to 
-    add extra behavior. Any route we mark with @login_required will 
-    automatically redirect to the login page if the user isn't logged in.
-    """
     @wraps(view_function)
     def wrapped_view(*args, **kwargs):
         if "username" not in session:
@@ -54,8 +45,6 @@ def login():
         password = request.form.get("password")
 
         if verify_user(username, password):
-            # session is Flask's built-in way to remember a logged-in 
-            # user across page visits, using a secure cookie
             session["username"] = username
             return redirect(url_for("home"))
         else:
@@ -90,16 +79,17 @@ def logout():
 @app.route("/")
 @login_required
 def home():
-    food_items = get_all_food_items()
+    current_username = session.get("username")
+    food_items = get_all_food_items(current_username)
 
     items_with_status = []
     expiring_soon_names = []
 
     for item in food_items:
-        food_name = item[1]
-        expiry_date = item[2]
-        scan_date = item[3]
-        storage_type = item[5]
+        food_name = item[2]
+        expiry_date = item[3]
+        scan_date = item[4]
+        storage_type = item[6]
 
         status = get_expiry_status(expiry_date)
 
@@ -115,7 +105,7 @@ def home():
             "food_name": food_name,
             "expiry_date": expiry_date,
             "scan_date": scan_date,
-            "image_path": item[4],
+            "image_path": item[5],
             "storage_type": storage_type,
             "status_label": status["status_label"],
             "css_class": status["css_class"],
@@ -133,13 +123,42 @@ def home():
         food_items=items_with_status,
         recipe_suggestions=recipe_suggestions,
         stats=stats,
-        username=session.get("username")
+        username=current_username
     )
+
+
+@app.route("/settings")
+@login_required
+def settings():
+    return render_template("settings.html", username=session.get("username"))
+
+
+@app.route("/chat", methods=["POST"])
+@login_required
+def chat():
+    data = request.get_json()
+    user_message = data.get("message", "").strip()
+
+    if not user_message:
+        return jsonify({"reply": "Please type a question first."})
+
+    # Keep a short conversation history in the session so the assistant 
+    # has context, without letting it grow unbounded
+    history = session.get("chat_history", [])
+
+    reply = ask_assistant(user_message, conversation_history=history)
+
+    history.append({"role": "user", "content": user_message})
+    history.append({"role": "assistant", "content": reply})
+    session["chat_history"] = history[-10:]  # keep only the last 10 messages
+
+    return jsonify({"reply": reply})
 
 
 @app.route("/upload", methods=["POST"])
 @login_required
 def upload_image():
+    current_username = session.get("username")
     uploaded_file = request.files.get("food_image")
 
     if uploaded_file is None or uploaded_file.filename == "":
@@ -167,6 +186,7 @@ def upload_image():
         print(f"No printed date found - using ESTIMATED expiry date: {final_expiry_date}")
 
     add_food_item(
+        username=current_username,
         food_name=food_name,
         expiry_date=final_expiry_date,
         scan_date=scan_date,
@@ -177,5 +197,7 @@ def upload_image():
     return redirect(url_for("home"))
 
 
-app.run(debug=True, use_reloader=False, host="0.0.0.0", port=5000)
-
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, use_reloader=False, host="0.0.0.0", port=port)
+     
